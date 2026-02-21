@@ -13,34 +13,29 @@
       nats-url-env
       "nats://127.0.0.1:4222")))
 
-(defn- nats-service-name []
-  (let [service-name (System/getenv "NATS_HTTP_NAME")]
-    (if service-name
-      service-name
-      "nats-http")))
-
-(defn start []
+(defn start [service-name opts]
   (let [url (nats-url)
-        service-name (nats-service-name)
         nc (Nats/connect url)
         service-group (Group. service-name)
-        echo-endpoint (-> (ServiceEndpoint/builder)
-                          (.endpointName "echo")
-                          (.group service-group)
-                          (.handler
-                            (reify ServiceMessageHandler
-                              (onMessage [this smsg]
-                                (.respond smsg nc (.getData smsg)))))
-                          (.build))
         send-endpoint (-> (ServiceEndpoint/builder)
-                          (.endpointName "http-request")
+                          (.endpointName "http")
                           (.group service-group)
                           (.handler
                             (reify ServiceMessageHandler
                               (onMessage [this smsg]
                                 (let [request (-> (.getData smsg)
                                                   (String. "UTF-8")
-                                                  (edn/read-string))
+                                                  (edn/read-string)
+                                                  (merge (select-keys
+                                                           opts
+                                                           [:body
+                                                            :headers
+                                                            :query-string
+                                                            :request-method
+                                                            :scheme
+                                                            :server-name
+                                                            :server-port
+                                                            :uri])))
                                       response (http/send-request request)]
                                   (.respond smsg nc (-> response str .getBytes))))))
                           (.build))
@@ -48,7 +43,6 @@
                     (.name service-name)
                     (.version "0.0.1")
                     (.description "NATS HTTP bridge")
-                    (.addServiceEndpoint echo-endpoint)
                     (.addServiceEndpoint send-endpoint)
                     (.connection nc)
                     (.build))]
@@ -59,10 +53,13 @@
   (.stop service))
 
 (defn -main [& args]
-  (start))
+  (doseq [config-path args]
+    (let [services (-> config-path slurp edn/read-string)]
+      (doseq [[service-name opts] services]
+        (start service-name opts)))))
 
 (comment
   (nats-url)
 
-  (def service (start))
+  (def service (start "nats-http" {}))
   (stop service))

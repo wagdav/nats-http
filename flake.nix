@@ -61,6 +61,10 @@
               default = "nats://nats:4222";
               description = "The URL of the NATS server.";
             };
+            configFiles = lib.mkOption {
+              type = lib.types.listOf lib.types.path;
+              description = "Paths to the configuration file in the Nix store.";
+            };
           };
 
           config = mkIf cfg.enable {
@@ -70,7 +74,7 @@
               wantedBy = [ "multi-user.target" ];
 
               serviceConfig = {
-                ExecStart = "${cfg.package}/bin/nats-http";
+                ExecStart = "${cfg.package}/bin/nats-http ${lib.concatStringsSep " " cfg.configFiles}";
                 Restart = "always";
                 DynamicUser = true;
               };
