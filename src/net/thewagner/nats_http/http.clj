@@ -14,7 +14,7 @@
           [(name k) v])
         [(name k) vs]))))
 
-(defn sanitize-response-headers [headers]
+(defn- sanitize-response-headers [headers]
   (into {}
     (for [[k vs] (.map headers)]
       (vector
@@ -48,7 +48,7 @@
                              (if body
                                (HttpRequest$BodyPublishers/ofString body)
                                (HttpRequest$BodyPublishers/noBody))))]
-    (when headers
+    (when (seq headers)
       (.headers request (into-array String (flatten-request-headers headers))))
 
     (let [response (.send @client (.build request) (HttpResponse$BodyHandlers/ofString))]
