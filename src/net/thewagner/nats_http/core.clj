@@ -4,10 +4,12 @@
     [net.thewagner.nats-http.http :as http])
   (:import
     [io.nats.client Nats]
-    [io.nats.service ServiceBuilder ServiceEndpoint ServiceMessageHandler Group])
+    [io.nats.service Service ServiceBuilder ServiceEndpoint ServiceMessageHandler Group])
   (:gen-class))
 
-(defn- nats-url []
+(set! *warn-on-reflection* true)
+
+(defn- nats-url ^String []
   (let [nats-url-env (System/getenv "NATS_URL")]
     (if nats-url-env
       nats-url-env
@@ -49,7 +51,7 @@
     (.startService service)
     {::service service}))
 
-(defn stop [{::keys [service]}]
+(defn stop [{::keys [^Service service]}]
   (.stop service))
 
 (defn -main [& args]
