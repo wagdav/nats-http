@@ -47,8 +47,6 @@
           cfg = config.services.nats-http;
         in
         {
-          nixpkgs.overlays = [ self.overlays.default ];
-
           options.services.nats-http = {
             enable = mkEnableOption "NATS to HTTP Bridge Service";
             package = mkOption {
@@ -68,6 +66,8 @@
           };
 
           config = mkIf cfg.enable {
+            nixpkgs.overlays = [ self.overlays.default ];
+
             systemd.services.nats-http = {
               description = "Clojure NATS-HTTP Bridge";
               after = [ "network.target" ];
