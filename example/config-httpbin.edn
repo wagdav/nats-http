@@ -1,0 +1,8 @@
+{"nats-http" {:scheme :https
+              :server-name "httpbin.org"
+              :server-port 443
+              :uri "/post"
+              :request-method :post
+              :query-string "?q=someQueryString"
+              :headers {:my-header-1 "header-value"
+                        :my-header-2 ["a", "b"]}}}
